@@ -1,11 +1,15 @@
 #!/bin/sh
-# Installs the skill for your user (every project). For one project only, copy skills/day-to-calendar
-# into that project's .claude/skills/ instead.
+# install.sh [skill ...]: copies skills into ~/.claude/skills (every project). No arguments installs all of them.
 set -e
 here=$(cd "$(dirname "$0")" && pwd)
 dest="$HOME/.claude/skills"
 mkdir -p "$dest"
-rm -rf "$dest/day-to-calendar"
-cp -R "$here/skills/day-to-calendar" "$dest/"
-[ -f "$HOME/.config/day-to-calendar/config.json" ] || { [ -t 0 ] && sh "$here/setup.sh"; }
-echo "installed to $dest/day-to-calendar. Open Claude Code and say: log today to my calendar."
+list="$*"; [ -n "$list" ] || list=$(ls "$here/skills")
+for s in $list; do
+  [ -f "$here/skills/$s/SKILL.md" ] || { echo "no such skill: $s" >&2; exit 1; }
+  rm -rf "$dest/$s"
+  cp -R "$here/skills/$s" "$dest/"
+  echo "installed $s"
+  if [ -f "$dest/$s/scripts/setup.sh" ] && [ -t 0 ]; then sh "$dest/$s/scripts/setup.sh"; fi
+done
+echo "Restart Claude Code, then ask for a skill by what it does."

@@ -13,7 +13,7 @@ cat > "$app/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
-<key>CFBundleIdentifier</key><string>io.github.jrejl.daycal</string>
+<key>CFBundleIdentifier</key><string>com.gmurad.daycal</string>
 <key>CFBundleName</key><string>DayCal</string>
 <key>CFBundleExecutable</key><string>DayCal</string>
 <key>CFBundlePackageType</key><string>APPL</string>
