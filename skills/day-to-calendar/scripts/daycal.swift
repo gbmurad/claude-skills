@@ -3,14 +3,32 @@
 //   daycal request             -> asks macOS for full calendar access (click Allow once)
 //   daycal add <events.json>   -> writes the events, skipping any with the same title on the same day
 // events.json: [{"date": "2026-09-24", "title": "...", "notes": "..."}]
-// Everything goes into one calendar (default name "Workday Log", override with DAYCAL_CALENDAR), so you can
+// Everything goes into one calendar (default name "Workday Log"), so you can
 // hide or delete it in one go and it never mixes with your own events.
 import EventKit
 import Foundation
 
 let store = EKEventStore()
 let args = CommandLine.arguments
-let calendarName = ProcessInfo.processInfo.environment["DAYCAL_CALENDAR"] ?? "Workday Log"
+
+// Settings live in ~/.config/day-to-calendar/config.json (written by setup.sh); DAYCAL_* env vars override.
+let cfgPath = NSHomeDirectory() + "/.config/day-to-calendar/config.json"
+let cfg = (FileManager.default.contents(atPath: cfgPath).flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }) ?? [:]
+let env = ProcessInfo.processInfo.environment
+let calendarName = env["DAYCAL_CALENDAR"] ?? (cfg["calendar"] as? String) ?? "Workday Log"
+let colorSetting = env["DAYCAL_COLOR"] ?? (cfg["color"] as? String) ?? "teal"
+let allDay = (cfg["all_day"] as? Bool) ?? true
+let startTime = (cfg["start_time"] as? String) ?? "17:00"      // used when all_day is false
+let minutes = (cfg["duration_minutes"] as? Int) ?? 60          // used when all_day is false
+
+func parseColor(_ s: String) -> CGColor {
+    let named: [String: String] = ["red": "E5484D", "orange": "F76B15", "yellow": "F5C400", "green": "30A46C",
+        "teal": "21A08C", "blue": "0090FF", "purple": "8E4EC6", "pink": "E93D82", "brown": "A18072", "gray": "8B8D98"]
+    var hex = (named[s.lowercased()] ?? s).replacingOccurrences(of: "#", with: "")
+    if hex.count != 6 { hex = "21A08C" }
+    let v = UInt32(hex, radix: 16) ?? 0x21A08C
+    return CGColor(red: CGFloat((v >> 16) & 255) / 255, green: CGFloat((v >> 8) & 255) / 255, blue: CGFloat(v & 255) / 255, alpha: 1)
+}
 
 func statusWord() -> String {
     switch EKEventStore.authorizationStatus(for: .event) {
@@ -25,10 +43,14 @@ func statusWord() -> String {
 }
 
 func workCalendar() -> EKCalendar? {
-    if let found = store.calendars(for: .event).first(where: { $0.title == calendarName }) { return found }
+    if let found = store.calendars(for: .event).first(where: { $0.title == calendarName }) {
+        let want = parseColor(colorSetting)
+        if found.cgColor != want && found.allowsContentModifications { found.cgColor = want; try? store.saveCalendar(found, commit: true) }
+        return found
+    }
     let cal = EKCalendar(for: .event, eventStore: store)
     cal.title = calendarName
-    cal.cgColor = CGColor(red: 0.13, green: 0.55, blue: 0.45, alpha: 1)
+    cal.cgColor = parseColor(colorSetting)
     let sources = store.sources
     cal.source = sources.first(where: { $0.sourceType == .calDAV && $0.title.lowercased().contains("icloud") })
         ?? store.defaultCalendarForNewEvents?.source
@@ -63,9 +85,16 @@ if cmd == "status" {
         ev.calendar = cal
         ev.title = title
         ev.notes = e["notes"]
-        ev.isAllDay = true
-        ev.startDate = day
-        ev.endDate = day
+        if allDay {
+            ev.isAllDay = true
+            ev.startDate = day
+            ev.endDate = day
+        } else {
+            let hm = startTime.split(separator: ":").compactMap { Int($0) }
+            let start = Calendar.current.date(bySettingHour: hm.first ?? 17, minute: hm.count > 1 ? hm[1] : 0, second: 0, of: day) ?? day
+            ev.startDate = start
+            ev.endDate = start.addingTimeInterval(TimeInterval(minutes * 60))
+        }
         do { try store.save(ev, span: .thisEvent, commit: false); added += 1 } catch { print("failed \(e["date"] ?? ""): \(error)") }
     }
     do { try store.commit() } catch { print("commit failed: \(error)") }
