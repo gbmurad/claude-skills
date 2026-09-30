@@ -9,7 +9,7 @@ Small, useful skills for [Claude Code](https://claude.com/claude-code), built by
 
 ## Install
 ```sh
-git clone https://github.com/JrejL/claude-skills.git
+git clone https://github.com/gbmurad/claude-skills.git
 cd claude-skills
 sh install.sh                    # every skill
 sh install.sh day-to-calendar    # just one

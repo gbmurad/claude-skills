@@ -13,7 +13,7 @@ Ask "log today to my calendar" and Claude drafts a title and a few sentences for
 
 ## Install
 ```sh
-git clone https://github.com/JrejL/claude-skills.git
+git clone https://github.com/gbmurad/claude-skills.git
 cd claude-skills
 sh install.sh day-to-calendar
 ```
