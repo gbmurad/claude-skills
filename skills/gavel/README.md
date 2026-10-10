@@ -19,13 +19,13 @@ you: use gavel for this: should we move the store to a subscription model?
 
 ## Why a trial
 
-Ask one AI whether your idea is good and it tends to agree with you. Ask a panel of AIs to discuss it and they
-tend to agree with each other: research on AI debates finds agents drop correct answers just to reach
-consensus. Neither gives you what a hard decision needs, which is the strongest case on both sides, judged
+Ask one chatbot whether your idea is good and it tends to agree with you. Ask a panel of them to discuss it and
+they tend to agree with each other: research on debates between language models finds they drop correct
+answers just to reach consensus. Neither gives you what a hard decision needs, which is the strongest case on both sides, judged
 by someone who is not trying to please anyone.
 
 A courtroom is an old answer to that problem. Gavel keeps the parts of it that are backed by research and
-drops the theater. Every rule below exists because a study found that groups, juries or AI panels go wrong
+drops the theater. Every rule below exists because a study found that groups, juries or panels of models go wrong
 without it (see [Why each rule exists](#the-rules-that-keep-it-honest)).
 
 ## What happens when you run it
@@ -48,7 +48,7 @@ without it (see [Why each rule exists](#the-rules-that-keep-it-honest)).
    │
  Tally         a script checks every ballot and computes the vote, the spread and the minority report
    │
- Ruling        a fresh judge opens his sealed opinion, weighs the evidence, and rules
+ Ruling        the judge returns fresh, opens his sealed opinion, weighs the evidence, and rules
 ```
 
 Each role is a separate Claude subagent with a clean memory, so nobody can be swayed by what they were not
@@ -78,8 +78,10 @@ Gavel remembers your last setup. Next time, say "use my last settings" and it sk
 ## The courtroom, role by role
 
 ### The judge
-The judge appears twice, as two separate subagents, on the model you chose (Opus by default, because the
-ruling is the product).
+There is one judge, and he sits twice: once before the trial and once to rule. Only the second sitting decides,
+so two judges can never disagree. Each sitting is a fresh subagent on the model you chose (Opus by default,
+because the ruling is the product); research found a judge brought in fresh at the end resists the biases that
+build up over a long debate better than one who sat through every round.
 
 **Pretrial.** Before any argument, the judge reads only the case file and:
 1. Sharpens your question into one testable motion ("Resolved: the store should move to a subscription model").
@@ -90,8 +92,9 @@ ruling is the product).
 5. Sets the standard of proof (below).
 6. Writes a **sealed prior**: his honest opinion and a probability, before hearing anyone. Nobody else reads it.
 
-**Ruling.** A fresh judge opens the sealed prior, reads the record and the jury's ballots, and rules. He must
-show how far the trial moved him from his first opinion, and explain any departure from the jury.
+**Ruling.** The judge comes back with a fresh memory, opens his own sealed prior, reads the record and the
+jury's ballots, and rules. He must show how far the trial moved him from his first opinion. He may overrule the
+jury, but only by explaining why in writing, and the jury's vote is printed under his ruling either way.
 
 ### The defense
 Argues for the motion in at most 500 words, then a 250 word rebuttal. Every claim is numbered (F1, F2) and
